@@ -22,7 +22,7 @@ macro_rules! run_acceptance_test {
 
             let output = sanitize_lines(output);
 
-            insta::assert_display_snapshot!(output);
+            insta::assert_snapshot!(output);
         })
     };
     ($case_name:expr) => {

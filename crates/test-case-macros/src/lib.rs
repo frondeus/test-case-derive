@@ -110,7 +110,7 @@ fn expand_additional_test_case_macros(item: &mut ItemFn) -> syn::Result<Vec<(Tes
     }
 
     for i in attrs_to_remove.into_iter().rev() {
-        item.attrs.swap_remove(i);
+        item.attrs.remove(i);
     }
 
     Ok(additional_cases)

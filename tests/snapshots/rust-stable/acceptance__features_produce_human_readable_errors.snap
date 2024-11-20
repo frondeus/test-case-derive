@@ -3,4 +3,4 @@ source: tests/acceptance_tests.rs
 expression: output
 ---
 error: 'with-regex' feature is required to use 'matches-regex' keyword
-error: could not compile `features_produce_human_readable_errors` (lib test) due to previous error
+error: could not compile `features_produce_human_readable_errors` (lib test) due to 1 previous error

@@ -5,7 +5,38 @@ use proc_macro2::{Span as Span2, TokenStream as TokenStream2};
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, Error, Expr, Ident, ItemFn, ReturnType, Token};
+use syn::{parse_quote, Attribute, Error, Expr, Ident, ItemFn, ReturnType, Token};
+
+// Check whether given attribute is a test attribute of forms:
+// * `#[test]`
+// * `#[core::prelude::*::test]` or `#[::core::prelude::*::test]`
+// * `#[std::prelude::*::test]` or `#[::std::prelude::*::test]`
+fn is_test_attribute(attr: &Attribute) -> bool {
+    let path = match &attr.meta {
+        syn::Meta::Path(path) => path,
+        _ => return false,
+    };
+    const CANDIDATES_LEN: usize = 4;
+
+    let candidates: [[&str; CANDIDATES_LEN]; 2] = [
+        ["core", "prelude", "*", "test"],
+        ["std", "prelude", "*", "test"],
+    ];
+    if path.leading_colon.is_none()
+        && path.segments.len() == 1
+        && path.segments[0].arguments.is_none()
+        && path.segments[0].ident == "test"
+    {
+        return true;
+    } else if path.segments.len() != candidates[0].len() {
+        return false;
+    }
+    candidates.into_iter().any(|segments| {
+        path.segments.iter().zip(segments).all(|(segment, path)| {
+            segment.arguments.is_none() && (path == "*" || segment.ident == path)
+        })
+    })
+}
 
 #[derive(Debug)]
 pub struct TestCase {
@@ -99,7 +130,12 @@ impl TestCase {
                 quote! { let _result = super::#item_name(#(#arg_values),*).await; },
             )
         } else {
-            attrs.insert(0, parse_quote! { #[::core::prelude::v1::test] });
+            let qualified_test_attr = parse_quote! { #[::core::prelude::v1::test] };
+            if let Some(attr) = attrs.iter().find(|attr| is_test_attribute(attr)) {
+                let msg = "second test attribute is supplied, consider removing or changing the order of your test attributes";
+                return Error::new_spanned(attr, msg).into_compile_error();
+            }
+            attrs.push(qualified_test_attr);
             (
                 TokenStream2::new(),
                 quote! { let _result = super::#item_name(#(#arg_values),*); },

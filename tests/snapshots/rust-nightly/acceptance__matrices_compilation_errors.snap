@@ -5,6 +5,6 @@ expression: output
 error: All literal values must be of the same type
 error: Range bounds can only be an integer literal
 error: Unbounded ranges are not supported
-error: could not compile `matrices_compilation_errors` (lib test) due to 5 previous errors
+error: could not compile `matrices_compilation_errors` (lib test) due to 5 previous errors; 1 warning emitted
 error: number too large to fit in target type
 error[E0308]: mismatched types
